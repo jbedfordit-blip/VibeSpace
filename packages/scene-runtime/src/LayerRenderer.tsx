@@ -33,10 +33,10 @@ export const LayerRenderer: React.FC<LayerRendererProps> = ({
 
     return {
       position: 'absolute',
-      left: layer.x,
-      top: layer.y,
-      width: layer.width ?? undefined,
-      height: layer.height ?? undefined,
+      left: `${layer.x}px`,
+      top: `${layer.y}px`,
+      width: layer.width ? `${layer.width}px` : undefined,
+      height: layer.height ? `${layer.height}px` : undefined,
       zIndex: layer.z_index,
       opacity: layer.opacity,
       mixBlendMode: layer.blend_mode as CSSProperties['mixBlendMode'],

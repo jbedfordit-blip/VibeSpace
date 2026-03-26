@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, CSSProperties } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, CSSProperties } from 'react';
 import type { SceneConfig } from '@vibespace/schema';
 import { useParallax } from './useParallax';
 import { LayerRenderer } from './LayerRenderer';
@@ -16,6 +16,22 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
 }) => {
   const parallaxOffset = useParallax();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const outerRef = useRef<HTMLDivElement>(null);
+
+  const { width: baseW, height: baseH } = config.template;
+
+  useEffect(() => {
+    function updateScale() {
+      if (!outerRef.current) return;
+      const rect = outerRef.current.getBoundingClientRect();
+      setScale(rect.width / baseW);
+    }
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    if (outerRef.current) ro.observe(outerRef.current);
+    return () => ro.disconnect();
+  }, [baseW]);
 
   const productMap = useMemo(() => {
     const map = new Map<string, SceneConfig['products'][0]>();
@@ -46,66 +62,72 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
     [config.layers]
   );
 
-  const containerStyle = useMemo<CSSProperties>(() => ({
+  const outerStyle = useMemo<CSSProperties>(() => ({
     position: 'relative',
     width: '100%',
-    aspectRatio: `${config.template.width} / ${config.template.height}`,
+    aspectRatio: `${baseW} / ${baseH}`,
     overflow: 'hidden',
     background: '#000',
-  }), [config.template.width, config.template.height]);
+  }), [baseW, baseH]);
 
-  const bgStyle = useMemo<CSSProperties>(() => ({
+  const innerStyle = useMemo<CSSProperties>(() => ({
     position: 'absolute',
     inset: 0,
-    zIndex: 0,
-  }), []);
+    width: baseW,
+    height: baseH,
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  }), [baseW, baseH, scale]);
 
   const bgImgStyle = useMemo<CSSProperties>(() => ({
+    position: 'absolute',
+    inset: 0,
     width: '100%',
     height: '100%',
     objectFit: 'cover',
     display: 'block',
+    zIndex: 0,
   }), []);
 
   return (
-    <div style={containerStyle}>
-      {/* Background */}
-      <div style={bgStyle}>
+    <div ref={outerRef} style={outerStyle}>
+      <div style={innerStyle}>
+        {/* Background */}
         <img
           src={config.template.background_url}
           alt={config.identity.title}
           style={bgImgStyle}
           draggable={false}
         />
+
+        {/* Layers */}
+        {sortedLayers.map((layer) => {
+          const product = layer.product_id
+            ? productMap.get(layer.product_id)
+            : undefined;
+
+          return (
+            <LayerRenderer
+              key={layer.id}
+              layer={layer}
+              parallaxOffset={parallaxOffset}
+              product={product}
+              onClick={
+                layer.interactive && layer.product_id
+                  ? () => handleLayerClick(layer.product_id!)
+                  : undefined
+              }
+            />
+          );
+        })}
+
+        {/* Atmosphere */}
+        <AtmosphereOverlay
+          animation={config.scene_animation}
+          width={baseW}
+          height={baseH}
+        />
       </div>
-
-      {/* Layers */}
-      {sortedLayers.map((layer) => {
-        const product = layer.product_id
-          ? productMap.get(layer.product_id)
-          : undefined;
-
-        return (
-          <LayerRenderer
-            key={layer.id}
-            layer={layer}
-            parallaxOffset={parallaxOffset}
-            product={product}
-            onClick={
-              layer.interactive && layer.product_id
-                ? () => handleLayerClick(layer.product_id!)
-                : undefined
-            }
-          />
-        );
-      })}
-
-      {/* Atmosphere */}
-      <AtmosphereOverlay
-        animation={config.scene_animation}
-        width={config.template.width}
-        height={config.template.height}
-      />
 
       {/* Product Panel */}
       <ProductPanel
