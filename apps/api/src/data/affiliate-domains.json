@@ -1,0 +1,32 @@
+[
+  {
+    "domain": "etsy.com",
+    "network": "awin",
+    "program_id": "awin-etsy-001",
+    "commission_rate": 0.04
+  },
+  {
+    "domain": "amazon.com",
+    "network": "direct",
+    "program_id": "amazon-assoc-001",
+    "commission_rate": 0.03
+  },
+  {
+    "domain": "society6.com",
+    "network": "impact",
+    "program_id": "impact-s6-001",
+    "commission_rate": 0.1
+  },
+  {
+    "domain": "redbubble.com",
+    "network": "impact",
+    "program_id": "impact-rb-001",
+    "commission_rate": 0.08
+  },
+  {
+    "domain": "uncommongoods.com",
+    "network": "shareasale",
+    "program_id": "sas-ug-001",
+    "commission_rate": 0.07
+  }
+]
